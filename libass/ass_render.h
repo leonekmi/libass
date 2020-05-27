@@ -25,9 +25,7 @@
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 #include FT_SYNTHESIS_H
-#ifdef CONFIG_HARFBUZZ
 #include <hb.h>
-#endif
 
 #include "ass.h"
 #include "ass_font.h"
@@ -126,11 +124,7 @@ typedef struct glyph_info {
     ASS_Font *font;
     int face_index;
     int glyph_index;
-#ifdef CONFIG_HARFBUZZ
     hb_script_t script;
-#else
-    int script;
-#endif
     double font_size;
     char *drawing_text;
     int drawing_scale;
