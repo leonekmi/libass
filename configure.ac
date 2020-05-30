@@ -1,5 +1,6 @@
 AC_INIT(libass, 0.14.0)
 AM_INIT_AUTOMAKE
+AM_EXTRA_RECURSIVE_TARGETS([bench])
 AC_CONFIG_MACRO_DIR([m4])
 # Disable Fortran checks
 define([AC_LIBTOOL_LANG_F77_CONFIG], [:])
@@ -268,5 +269,5 @@ AC_SUBST([PKG_REQUIRES_PRIVATE], [$(test x$enable_shared = xno || echo ${pkg_req
 # Setup output beautifier.
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
-AC_CONFIG_FILES([Makefile libass/Makefile test/Makefile compare/Makefile profile/Makefile libass.pc])
+AC_CONFIG_FILES([Makefile libass/Makefile test/Makefile compare/Makefile profile/Makefile checkasm/Makefile libass.pc])
 AC_OUTPUT
