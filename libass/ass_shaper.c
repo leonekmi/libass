@@ -23,6 +23,7 @@
 #include "ass_render.h"
 #include "ass_font.h"
 #include "ass_parse.h"
+#include "ass_priv.h"
 #include "ass_cache.h"
 #include <limits.h>
 #include <stdbool.h>
@@ -37,10 +38,6 @@ enum {
     CLIG
 };
 #define NUM_FEATURES 5
-#endif
-
-#if FRIBIDI_MAJOR_VERSION >= 1
-#define USE_FRIBIDI_EX_API
 #endif
 
 struct ass_shaper {
@@ -99,13 +96,14 @@ void ass_shaper_info(ASS_Library *lib)
  * \brief grow arrays, if needed
  * \param new_size requested size
  */
-static bool check_allocations(ASS_Shaper *shaper, size_t new_size)
+static bool check_allocations(ASS_Shaper *shaper, ASS_ParserPriv *parser_priv,
+                              size_t new_size)
 {
     if (new_size > shaper->n_glyphs) {
         if (!ASS_REALLOC_ARRAY(shaper->event_text, new_size) ||
             !ASS_REALLOC_ARRAY(shaper->ctypes, new_size) ||
 #ifdef USE_FRIBIDI_EX_API
-            !ASS_REALLOC_ARRAY(shaper->btypes, new_size) ||
+            (parser_priv->bidi_brackets && !ASS_REALLOC_ARRAY(shaper->btypes, new_size)) ||
 #endif
             !ASS_REALLOC_ARRAY(shaper->emblevels, new_size) ||
             !ASS_REALLOC_ARRAY(shaper->cmap, new_size))
@@ -888,13 +886,14 @@ static void ass_shaper_skip_characters(TextInfo *text_info)
  * \param text_info event's text
  * \return success, when 0
  */
-int ass_shaper_shape(ASS_Shaper *shaper, TextInfo *text_info)
+int ass_shaper_shape(ASS_Shaper *shaper, ASS_ParserPriv *parser_priv,
+                     TextInfo *text_info)
 {
     int i, ret, last_break;
     FriBidiParType dir;
     GlyphInfo *glyphs = text_info->glyphs;
 
-    if (!check_allocations(shaper, text_info->length))
+    if (!check_allocations(shaper, parser_priv, text_info->length))
         return -1;
 
     // Get bidi character types and embedding levels
@@ -907,11 +906,15 @@ int ass_shaper_shape(ASS_Shaper *shaper, TextInfo *text_info)
             fribidi_get_bidi_types(shaper->event_text + last_break,
                     i - last_break + 1, shaper->ctypes + last_break);
 #ifdef USE_FRIBIDI_EX_API
-            fribidi_get_bracket_types(shaper->event_text + last_break,
-                    i - last_break + 1, shaper->ctypes + last_break,
-                    shaper->btypes + last_break);
+            FriBidiBracketType *btypes = NULL;
+            if (parser_priv->bidi_brackets) {
+                btypes = shaper->btypes + last_break;
+                fribidi_get_bracket_types(shaper->event_text + last_break,
+                        i - last_break + 1, shaper->ctypes + last_break,
+                        btypes);
+            }
             ret = fribidi_get_par_embedding_levels_ex(
-                    shaper->ctypes + last_break, shaper->btypes + last_break,
+                    shaper->ctypes + last_break, btypes,
                     i - last_break + 1, &dir, shaper->emblevels + last_break);
 #else
             ret = fribidi_get_par_embedding_levels(shaper->ctypes + last_break,
