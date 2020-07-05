@@ -22,6 +22,7 @@
 typedef struct ass_shaper ASS_Shaper;
 
 #include <fribidi.h>
+#include <stdbool.h>
 #include "ass_render.h"
 
 void ass_shaper_info(ASS_Library *lib);
@@ -34,7 +35,7 @@ void ass_shaper_find_runs(ASS_Shaper *shaper, ASS_Renderer *render_priv,
 void ass_shaper_set_base_direction(ASS_Shaper *shaper, FriBidiParType dir);
 void ass_shaper_set_language(ASS_Shaper *shaper, const char *code);
 void ass_shaper_set_level(ASS_Shaper *shaper, ASS_ShapingLevel level);
-int ass_shaper_shape(ASS_Shaper *shaper, TextInfo *text_info);
+bool ass_shaper_shape(ASS_Shaper *shaper, TextInfo *text_info);
 void ass_shaper_cleanup(ASS_Shaper *shaper, TextInfo *text_info);
 FriBidiStrIndex *ass_shaper_reorder(ASS_Shaper *shaper, TextInfo *text_info);
 FriBidiParType resolve_base_direction(int font_encoding);
